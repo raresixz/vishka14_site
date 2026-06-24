@@ -12,7 +12,7 @@ def get_db():
 
 # ===== БАЗА ДАННЫХ =====
 def init_db():
-    conn = get_db()
+    conn = sqlite3.connect("clients.db")
     cur = conn.cursor()
 
     cur.execute("""
@@ -28,8 +28,10 @@ def init_db():
     conn.commit()
     conn.close()
 
-# создаём таблицы при запуске
-init_db()
+
+@app.before_first_request
+def init_database():
+    init_db()
 
 
 # ===== DB CONNECT =====
@@ -152,3 +154,4 @@ import os
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
