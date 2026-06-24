@@ -6,8 +6,13 @@ app.secret_key = "12345"
 
 
 # ===== БАЗА ДАННЫХ =====
-def init_db():
+def get_db():
     conn = sqlite3.connect("clients.db")
+    return conn
+
+# ===== БАЗА ДАННЫХ =====
+def init_db():
+    conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
@@ -22,7 +27,6 @@ def init_db():
 
     conn.commit()
     conn.close()
-
 
 # создаём таблицы при запуске
 init_db()
