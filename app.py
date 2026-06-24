@@ -21,7 +21,8 @@ def init_db():
 app = Flask(__name__)
 app.secret_key = "12345"
 
-init_db()
+with app.app_context():
+    init_db()
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
