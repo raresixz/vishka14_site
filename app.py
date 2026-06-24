@@ -1,16 +1,12 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
+import os
 
 app = Flask(__name__)
 app.secret_key = "12345"
 
 
-# ===== БАЗА ДАННЫХ =====
-def get_db():
-    conn = sqlite3.connect("clients.db")
-    return conn
-
-# ===== БАЗА ДАННЫХ =====
+# ===== DB =====
 def init_db():
     conn = sqlite3.connect("clients.db")
     cur = conn.cursor()
@@ -29,15 +25,14 @@ def init_db():
     conn.close()
 
 
-@app.before_first_request
-def init_database():
-    init_db()
-
-
-# ===== DB CONNECT =====
 def db():
     conn = sqlite3.connect("clients.db")
     return conn
+
+
+# ===== INIT (ВАЖНО ДЛЯ RAILWAY) =====
+with app.app_context():
+    init_db()
 
 
 # ===== LOGIN =====
@@ -63,7 +58,7 @@ def logout():
     return redirect('/login')
 
 
-# ===== MAIN PAGE =====
+# ===== MAIN =====
 @app.route('/')
 def index():
     if 'user' not in session:
@@ -80,7 +75,7 @@ def index():
     return render_template('index.html', clients=clients)
 
 
-# ===== ADD CLIENT =====
+# ===== ADD =====
 @app.route('/add', methods=['POST'])
 def add():
     name = request.form['name']
@@ -147,10 +142,7 @@ def edit(id):
     return render_template('edit.html', client=client)
 
 
-# ===== START =====
-
-import os
-
+# ===== START (RAILWAY FIX) =====
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
