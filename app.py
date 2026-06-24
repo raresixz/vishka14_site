@@ -1,6 +1,11 @@
-from flask import Flask, render_template, request, redirect, session    
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
 
+app = Flask(__name__)
+app.secret_key = "12345"
+
+
+# ===== БАЗА ДАННЫХ =====
 def init_db():
     conn = sqlite3.connect("clients.db")
     cur = conn.cursor()
@@ -18,12 +23,18 @@ def init_db():
     conn.commit()
     conn.close()
 
-app = Flask(__name__)
-app.secret_key = "12345"
 
-with app.app_context():
-    init_db()
+# создаём таблицы при запуске
+init_db()
 
+
+# ===== DB CONNECT =====
+def db():
+    conn = sqlite3.connect("clients.db")
+    return conn
+
+
+# ===== LOGIN =====
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -36,28 +47,34 @@ def login():
         else:
             return "Неверный логин"
 
-    return render_template('login.html')    
-
-def db():
-    conn = sqlite3.connect('clients.db')
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return render_template('login.html')
 
 
+# ===== LOGOUT =====
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/login')
+
+
+# ===== MAIN PAGE =====
 @app.route('/')
 def index():
     if 'user' not in session:
         return redirect('/login')
 
-    conn = sqlite3.connect('clients.db')
+    conn = db()
     cur = conn.cursor()
+
     cur.execute("SELECT * FROM clients")
     clients = cur.fetchall()
+
     conn.close()
 
     return render_template('index.html', clients=clients)
 
 
+# ===== ADD CLIENT =====
 @app.route('/add', methods=['POST'])
 def add():
     name = request.form['name']
@@ -79,6 +96,7 @@ def add():
     return redirect('/')
 
 
+# ===== DELETE =====
 @app.route('/delete/<int:id>')
 def delete(id):
     conn = db()
@@ -92,6 +110,7 @@ def delete(id):
     return redirect('/')
 
 
+# ===== EDIT =====
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     conn = db()
@@ -111,19 +130,17 @@ def edit(id):
 
         conn.commit()
         conn.close()
+
         return redirect('/')
 
     cur.execute("SELECT * FROM clients WHERE id=?", (id,))
     client = cur.fetchone()
 
     conn.close()
+
     return render_template('edit.html', client=client)
 
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    return redirect('/login')
 
-
+# ===== START =====
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=5000)
